@@ -43,8 +43,8 @@ jobs:
             git push -f -u origin master
           elif ! git tag| grep -q "$ver-$rel"; then
             hash=$(grep "^PKG_HASH:=" Makefile| cut -d\= -f2)
-            git tag
-            ls -R
+            git tag 2>>&1
+            ls -aR
           fi
           echo "::set-output name=ver::$ver"
           echo "::set-output name=rel::$rel"
