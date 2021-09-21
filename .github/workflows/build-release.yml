@@ -26,6 +26,7 @@ jobs:
         run: |
           latest=$(curl -sL https://github.com/XTLS/Xray-core/releases )
           ver=$(echo "$latest"|grep -o 'tree/v[0-9]\+\.[0-9]\+\.[0-9]\+' |head -1 |cut -d v -f2)
+          rel=$(grep "^PKG_RELEASE:=" Makefile| cut -d\= -f2)
           if ! grep -q "^PKG_VERSION:=$ver" Makefile; then
             wget https://codeload.github.com/XTLS/Xray-core/tar.gz/v$ver
             hash=$(sha256sum v$ver |cut -d\  -f1)
@@ -40,15 +41,16 @@ jobs:
             git remote set-url --add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
             git fetch --unshallow origin
             git push -f -u origin master
+          elif ! git tag| grep -q "$ver-$rel"; then
+            hash=$(grep "^PKG_HASH:=" Makefile| cut -d\= -f2)
           fi
-          rel=$(grep "^PKG_RELEASE:=" Makefile| cut -d\= -f2)
-          hash=$(grep "^PKG_HASH:=" Makefile| cut -d\= -f2)
           echo "::set-output name=ver::$ver"
           echo "::set-output name=rel::$rel"
           echo "::set-output name=hash::$hash"
       
   release:
     needs: check
+    if: ${{ needs.check.outputs.hash }}
     name: Build for ${{ matrix.arch }}
     runs-on: ubuntu-latest
     strategy:
