@@ -21,6 +21,8 @@ jobs:
       hash: ${{ steps.check.outputs.hash }}
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Check latest
         id: check
         run: |
@@ -44,7 +46,6 @@ jobs:
           elif ! git tag| grep -q "$ver-$rel"; then
             hash=$(grep "^PKG_HASH:=" Makefile| cut -d\= -f2)
             git tag -l -n
-            ls -aR
           fi
           echo "::set-output name=ver::$ver"
           echo "::set-output name=rel::$rel"
