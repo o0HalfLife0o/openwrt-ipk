@@ -41,7 +41,7 @@ jobs:
             git add --all
             git commit -m "v$ver"
             git remote set-url --add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
-            git fetch --unshallow origin
+            #git fetch --unshallow origin
             git push -f -u origin master
           elif ! git tag| grep -q "$ver-$rel"; then
             hash=$(grep "^PKG_HASH:=" Makefile| cut -d\= -f2)
