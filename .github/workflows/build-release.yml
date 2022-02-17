@@ -9,50 +9,85 @@ on:
   workflow_dispatch:
 
 env:
-  PACKAGE_NAME: xray-core
   CACHE_DIR: ~/cache
 
 jobs:
   check:
     runs-on: ubuntu-latest
     outputs:
-      ver: ${{ steps.check.outputs.ver }}
-      rel: ${{ steps.check.outputs.rel }}
-      hash: ${{ steps.check.outputs.hash }}
+      PACKAGE_NAME: ${{ env.PACKAGE_NAME }}
+      PACKAGE_NAME1: ${{ env.PACKAGE_NAME_SHORT }}
+      COMMIT_MSG: ${{ env.COMMIT_MSG }}
+      TAG: ${{ env.TAG }}
+      ver: ${{ env.ver }}
+      hash: ${{ env.hash }}
+      commit: ${{ env.commit }}
     steps:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Check latest
-        id: check
+      - name: Git init
         run: |
-          latest=$(curl -sL https://github.com/XTLS/Xray-core/releases )
-          ver=$(echo "$latest"|grep -o 'tree/v[0-9]\+\.[0-9]\+\.[0-9]\+' |head -1 |cut -d v -f2)
-          rel=$(grep "^PKG_RELEASE:=" Makefile| cut -d\= -f2)
-          if ! grep -q "^PKG_VERSION:=$ver" Makefile; then
-            wget https://codeload.github.com/XTLS/Xray-core/tar.gz/v$ver
-            hash=$(sha256sum v$ver |cut -d\  -f1)
-            rm -f v$ver
-            sed -i -e "/^PKG_HASH/s#=.*#=$hash#" -e "/^PKG_VERSION/s#=.*#=$ver#" -e "/^PKG_RELEASE/s#=.*#=1#" Makefile
-            #提交到master
             sed -i '/url =/d' ./.git/config
             git config --local user.name "actions"
             git config --local user.email "action@github.com"
-            git add --all
-            git commit -m "v$ver"
             git remote set-url --add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
-            #git fetch --unshallow origin
-            git push -f -u origin master
-          elif ! git tag| grep -q "$ver-$rel"; then
-            hash=$(grep "^PKG_HASH:=" Makefile| cut -d\= -f2)
+      - name: Check Xray
+        run: |
+          latest=$(curl -sL https://github.com/XTLS/Xray-core/releases )
+          ver=$(echo "$latest"|grep -o 'tree/v[0-9]\+\.[0-9]\+\.[0-9]\+' |head -1 |cut -d v -f2)
+          if ! git log --oneline |grep -q "xray_v$ver"; then
+            wget https://codeload.github.com/XTLS/Xray-core/tar.gz/v$ver
+            hash=$(sha256sum v$ver |cut -d\  -f1)
+            rm -f v$ver
+            sed -i -e "/^PKG_HASH/s#=.*#=$hash#" -e "/^PKG_VERSION/s#=.*#=$ver#" xray-core/Makefile
+            sed -i '/PACKAGE_NAME/,$d' $GITHUB_ENV
+            echo "PACKAGE_NAME=xray-core" >> $GITHUB_ENV
+            echo "PACKAGE_NAME_SHORT=xray" >> $GITHUB_ENV
+            echo "COMMIT_MSG=xray_v$ver" >> $GITHUB_ENV
+            echo "TAG=$COMMIT_MSG" >> $GITHUB_ENV
+            echo "hash=$hash" >> $GITHUB_ENV
+            echo "ver=$ver" >> $GITHUB_ENV
           fi
+      - name: Check Smartdns
+        run: |
+          latest=$(curl -sL https://github.com/pymumu/smartdns/releases )
+          ver="1.$(date -d "8 hour" -u +%Y.%m.%d-%H%M)"
+          commit=$(curl -sL https://github.com/pymumu/smartdns/commits/master |grep -o '/pymumu/smartdns/commit/[a-z0-9]\+' |head -1 | cut -d\/ -f5)
+          shortCommit=$(echo $commit |cut -c 1-20)
+          if ! git log --oneline |grep -q "$shortCommit"; then
+            sed -i -e '/^PKG_MIRROR_HASH/s#=.*#=skip#' -e "/^PKG_VERSION/s#=.*#=$ver#" -e "/^PKG_SOURCE_VERSION/s#=.*#=$commit#" smartdns/Makefile
+            git add --all
+            sed -i '/PACKAGE_NAME/,$d' $GITHUB_ENV
+            echo "PACKAGE_NAME=smartdns" >> $GITHUB_ENV
+            echo "PACKAGE_NAME_SHORT=smartdns" >> $GITHUB_ENV
+            echo "COMMIT_MSG=smartdns_$ver $commit" >> $GITHUB_ENV
+            echo "TAG=smartdns_$ver" >> $GITHUB_ENV
+            echo "hash=skip" >> $GITHUB_ENV
+            echo "ver=$ver" >> $GITHUB_ENV
+            echo "commit=$commit" >> $GITHUB_ENV
+          fi
+      - name: Set Variables
+        id: set
+        run: |
+          echo "::set-output name=PACKAGE_NAME::$PACKAGE_NAME"
+          echo "::set-output name=PACKAGE_NAME_SHORT::$PACKAGE_NAME_SHORT"
+          echo "::set-output name=COMMIT_MSG::$COMMIT_MSG"
+          echo "::set-output name=TAG::$TAG"
           echo "::set-output name=ver::$ver"
-          echo "::set-output name=rel::$rel"
+          echo "::set-output name=commit::$commit"
           echo "::set-output name=hash::$hash"
+      - name: Push to master
+        if: ${{ env.COMMIT_MSG }}
+        continue-on-error: true
+        run: |
+          git add --all
+          git commit -m "$COMMIT_MSG"
+          git push -u origin master
       
   release:
     needs: check
-    if: ${{ needs.check.outputs.hash }}
+    if: ${{ needs.check.outputs.PACKAGE_NAME }}
     name: Build for ${{ matrix.arch }}
     runs-on: ubuntu-latest
     strategy:
@@ -71,9 +106,9 @@ jobs:
           - arch: arm_arm1176jzf-s_vfp
             sdk_url_path: https://downloads.openwrt.org/snapshots/targets/bcm27xx/bcm2708
             sdk_name: -sdk-bcm27xx-bcm2708_
-          - arch: arm_arm926ej-s
-            sdk_url_path: https://downloads.openwrt.org/snapshots/targets/at91/legacy
-            sdk_name: -sdk-at91-legacy_
+          #- arch: arm_arm926ej-s
+          #  sdk_url_path: https://downloads.openwrt.org/snapshots/targets/at91/legacy
+          #  sdk_name: -sdk-at91-legacy_
           - arch: arm_cortex-a15_neon-vfpv4
             sdk_url_path: https://downloads.openwrt.org/snapshots/targets/ipq806x/generic
             sdk_name: -sdk-ipq806x-generic_
@@ -162,16 +197,23 @@ jobs:
     env:
       SDK_URL_PATH: ${{ matrix.sdk_url_path }}
       SDK_NAME: ${{ matrix.sdk_name }}
+      PACKAGE_NAME: ${{ needs.check.outputs.PACKAGE_NAME }}
+      PACKAGE_NAME1: ${{ needs.check.outputs.PACKAGE_NAME1 }}
+      COMMIT_MSG: ${{ needs.check.outputs.COMMIT_MSG }}
+      TAG: ${{ needs.check.outputs.TAG }}
       ver: ${{ needs.check.outputs.ver }}
-      rel: ${{ needs.check.outputs.rel }}
       hash: ${{ needs.check.outputs.hash }}
+      commit: ${{ needs.check.outputs.commit }}
       CCACHE_DIR: ~/.ccache
       CONFIG_CCACHE: y
     steps:
       - name: Checkout
         uses: actions/checkout@v2
         
-      - run: sed -i -e "/^PKG_HASH/s#=.*#=${{ env.hash }}#" -e "/^PKG_VERSION/s#=.*#=${{ env.ver }}#" -e "/^PKG_RELEASE/s#=.*#=${{ env.rel }}#" Makefile
+      - run: |
+          if [ -n "${{ env.hash }}" ]; then sed -i -e "/^PKG_HASH/s#=.*#=${{ env.hash }}#" -e "/^PKG_MIRROR_HASH/s#=.*#=${{ env.hash }}#" ${{ env.PACKAGE_NAME }}/Makefile; fi
+          if [ -n "${{ env.ver }}" ]; then sed -i "/^PKG_VERSION/s#=.*#=${{ env.ver }}#" ${{ env.PACKAGE_NAME }}/Makefile; fi
+          if [ -n "${{ env.commit }}" ]; then sed -i "/^PKG_SOURCE_VERSION/s#=.*#=${{ env.commit }}#" ${{ env.PACKAGE_NAME }}/Makefile; fi
 
       - name: Prepare Cache Key
         id: cache_key
@@ -242,52 +284,36 @@ jobs:
           test -d "feeds/packages/net/$PACKAGE_NAME" && rm -rf "feeds/packages/net/$PACKAGE_NAME" || true
           test -d "feeds/packages/lang/golang" && rm -rf "feeds/packages/lang/golang" || true
           curl https://codeload.github.com/openwrt/packages/tar.gz/${OPENWRT_GOLANG_COMMIT:-master} | tar -xz -C "feeds/packages/lang" --strip=2 packages-${OPENWRT_GOLANG_COMMIT:-master}/lang/golang
-          ln -s "${{ github.workspace }}" "package/$PACKAGE_NAME"
+          ln -s "${{ github.workspace }}/${{ env.PACKAGE_NAME }}" "package/$PACKAGE_NAME"
           ./scripts/feeds install -a
           cd -
       - name: Build Packages
         run: |
           cd "$SDK_HOME"
           make defconfig
+          if grep -q 'PKG_MIRROR_HASH.*skip' ${PACKAGE_NAME}/Makefile; then
+            make package/${PACKAGE_NAME}/download V=s
+            make package/${PACKAGE_NAME}/check FIXUP=1 V=s
+          fi
           make package/${PACKAGE_NAME}/{clean,compile} V=s
           find "$SDK_HOME/bin/" -type f -name "*.ipk" -exec ls -lh {} \;
           cd -
       - name: Copy Bin Files
         run: |
-          find "$SDK_HOME/bin/" -type f -name "*xray*.ipk" -exec cp {} "${{ github.workspace }}" \;
+          find "$SDK_HOME/bin/" -type f -name "*${PACKAGE_NAME1}*.ipk" -exec cp {} "${{ github.workspace }}" \;
           find "${{ github.workspace }}" -type f -name "*.ipk" -exec ls -lh {} \;
       - name: Upload files to Artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: openwrt-xray-${{ matrix.arch }}
+          name: ${{ env.TAG }}-${{ matrix.arch }}
           path: |
             *.ipk
       - name: Release and Upload Assets
         uses: softprops/action-gh-release@v1
         with:
-          name: v${{ env.ver }}-${{ env.rel }}
-          tag_name: v${{ env.ver }}-${{ env.rel }}
-          body: v${{ env.ver }}-${{ env.rel }}
+          name: ${{ env.TAG }}
+          tag_name: ${{ env.TAG }}
+          body: ${{ env.COMMIT_MSG }}
           files: '*.ipk'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  notify:
-    name: Notify Release Publish
-    runs-on: ubuntu-latest
-    env:
-      TRIGGER_URL: ${{ secrets.TRIGGER_URL }}
-      TRIGGER_TOKEN: ${{ secrets.TRIGGER_TOKEN }}
-    needs: release
-    steps:
-      - name: Notify Jenkins
-        run: |
-          if [ -z "$TRIGGER_URL" ] ; then
-            echo "::warning::No trigger url found, skip..."
-            exit 0
-          fi
-          curl -X POST \
-              -H "Content-Type: application/json; charset=utf-8" \
-              -H "Authorization: Bearer $TRIGGER_TOKEN" \
-              -d "{\"event\":\"release\",\"repository\":\"${{ github.repository }}\",\"ref\":\"${{ github.ref }}\"}" \
-              "$TRIGGER_URL" || true
