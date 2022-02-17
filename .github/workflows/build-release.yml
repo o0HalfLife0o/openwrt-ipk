@@ -54,11 +54,11 @@ jobs:
         run: |
           latest=$(curl -sL https://github.com/XTLS/Xray-core/releases )
           ver=$(echo "$latest"|grep -o 'tree/v[0-9]\+\.[0-9]\+\.[0-9]\+' |head -1 |cut -d v -f2)
-          if ! git log --oneline |grep -q "xray_v$ver"; then
+          if ! git tag -l |grep -q "xray_v$ver"; then
             wget https://codeload.github.com/XTLS/Xray-core/tar.gz/v$ver
             hash=$(sha256sum v$ver |cut -d\  -f1)
             rm -f v$ver
-            sed -i -e "/^PKG_HASH/s#=.*#=$hash#" -e "/^PKG_VERSION/s#=.*#=$ver#" xray-core/Makefile
+            sed -i -e "/^PKG_HASH/s#=.*#=$hash#" -e "/^PKG_VERSION/s#=.*#=$ver#" xray/Makefile
             sed -i '/PACKAGE_NAME/,$d' $GITHUB_ENV
             echo "PACKAGE_NAME=xray-core" >> $GITHUB_ENV
             echo "PACKAGE_NAME_SHORT=xray" >> $GITHUB_ENV
@@ -212,9 +212,9 @@ jobs:
         uses: actions/checkout@v2
         
       - run: |
-          if [ -n "${{ env.hash }}" ]; then sed -i -e "/^PKG_HASH/s#=.*#=${{ env.hash }}#" -e "/^PKG_MIRROR_HASH/s#=.*#=${{ env.hash }}#" ${{ env.PACKAGE_NAME }}/Makefile; fi
-          if [ -n "${{ env.ver }}" ]; then sed -i "/^PKG_VERSION/s#=.*#=${{ env.ver }}#" ${{ env.PACKAGE_NAME }}/Makefile; fi
-          if [ -n "${{ env.commit }}" ]; then sed -i "/^PKG_SOURCE_VERSION/s#=.*#=${{ env.commit }}#" ${{ env.PACKAGE_NAME }}/Makefile; fi
+          if [ -n "${{ env.hash }}" ]; then sed -i -e "/^PKG_HASH/s#=.*#=${{ env.hash }}#" -e "/^PKG_MIRROR_HASH/s#=.*#=${{ env.hash }}#" ${{ env.PACKAGE_NAME1 }}/Makefile; fi
+          if [ -n "${{ env.ver }}" ]; then sed -i "/^PKG_VERSION/s#=.*#=${{ env.ver }}#" ${{ env.PACKAGE_NAME1 }}/Makefile; fi
+          if [ -n "${{ env.commit }}" ]; then sed -i "/^PKG_SOURCE_VERSION/s#=.*#=${{ env.commit }}#" ${{ env.PACKAGE_NAME1 }}/Makefile; fi
 
       - name: Prepare Cache Key
         id: cache_key
@@ -285,7 +285,7 @@ jobs:
           test -d "feeds/packages/net/$PACKAGE_NAME" && rm -rf "feeds/packages/net/$PACKAGE_NAME" || true
           test -d "feeds/packages/lang/golang" && rm -rf "feeds/packages/lang/golang" || true
           curl https://codeload.github.com/openwrt/packages/tar.gz/${OPENWRT_GOLANG_COMMIT:-master} | tar -xz -C "feeds/packages/lang" --strip=2 packages-${OPENWRT_GOLANG_COMMIT:-master}/lang/golang
-          ln -s "${{ github.workspace }}/${{ env.PACKAGE_NAME }}" "package/$PACKAGE_NAME"
+          ln -s "${{ github.workspace }}/${{ env.PACKAGE_NAME1 }}" "package/$PACKAGE_NAME"
           ./scripts/feeds install -a
           cd -
       - name: Build Packages
