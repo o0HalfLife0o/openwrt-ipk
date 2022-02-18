@@ -68,6 +68,24 @@ jobs:
             echo "ver=$ver" >> $GITHUB_ENV
             echo "commit=" >> $GITHUB_ENV
           fi
+      - name: Check V2ray
+        run: |
+          latest=$(curl -sL https://github.com/v2fly/v2ray-core/releases/latest )
+          ver=$(echo "$latest"|grep -o 'tree/v[0-9]\+\.[0-9]\+\.[0-9]\+' |head -1 |cut -d v -f2)
+          if ! git tag -l |grep -q "v2ray_v$ver"; then
+            wget https://codeload.github.com/v2fly/v2ray-core/tar.gz/v$ver
+            hash=$(sha256sum v$ver |cut -d\  -f1)
+            rm -f v$ver
+            sed -i -e "/^PKG_HASH/s#=.*#=$hash#" -e "/^PKG_VERSION/s#=.*#=$ver#" v2ray/Makefile
+            sed -i '/PACKAGE_NAME/,$d' $GITHUB_ENV
+            echo "PACKAGE_NAME=v2ray-core" >> $GITHUB_ENV
+            echo "PACKAGE_NAME_SHORT=v2ray" >> $GITHUB_ENV
+            echo "COMMIT_MSG=v2ray_v$ver" >> $GITHUB_ENV
+            echo "TAG=v2ray_v$ver" >> $GITHUB_ENV
+            echo "hash=$hash" >> $GITHUB_ENV
+            echo "ver=$ver" >> $GITHUB_ENV
+            echo "commit=" >> $GITHUB_ENV
+          fi
       - name: Set Variables
         id: set
         run: |
@@ -231,7 +249,7 @@ jobs:
             openwrt-${{ matrix.arch }}-${{ env.PACKAGE_NAME }}-
       - name: Install Dependencies
         run: |
-          DEBIAN_FRONTEND=noninteractive sudo apt-get install -y ccache gettext libncurses5-dev xsltproc
+          DEBIAN_FRONTEND=noninteractive sudo apt-get install -y ccache gettext libncurses5-dev xsltproc upx
       - name: Create Directories
         run: |
           CACHE_DIR_SDK="$(eval echo "$CACHE_DIR/sdk")"
