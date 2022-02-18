@@ -37,7 +37,7 @@ menu "Xray Configuration"
 
 config PACKAGE_XRAY_COMPRESS_UPX
 	bool "Compress executable files with UPX"
-	default y
+	default n
 
 config PACKAGE_XRAY_FETCH_VIA_PROXYCHAINS
 	bool "Fetch data files using proxychains (not recommended)"
