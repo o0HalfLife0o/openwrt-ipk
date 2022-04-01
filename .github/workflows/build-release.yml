@@ -97,14 +97,12 @@ jobs:
             mv -f  /tmp/openwrt-passwall2-main/luci-app-passwall2 luci-app-passwall2
             ver=$(grep 'PKG_VERSION' luci-app-passwall2/Makefile |cut -d\= -f2)
             rel=$(grep 'PKG_RELEASE' luci-app-passwall2/Makefile |cut -d\= -f2)
-            ver="${ver}-${rel}"
             git add --all
             sed -i '/PACKAGE_NAME/,$d' $GITHUB_ENV
-            echo "PACKAGE_NAME=passwall2" >> $GITHUB_ENV
-            echo "PACKAGE_NAME_SHORT=passwall2" >> $GITHUB_ENV
-            echo "COMMIT_MSG=passwall2_$ver $commit" >> $GITHUB_ENV
-            echo "TAG=passwall2_$ver" >> $GITHUB_ENV
-            echo "hash=skip" >> $GITHUB_ENV
+            echo "PACKAGE_NAME=luci-app-passwall2" >> $GITHUB_ENV
+            echo "PACKAGE_NAME_SHORT=luci-app-passwall2" >> $GITHUB_ENV
+            echo "COMMIT_MSG=luci-app-passwall2_$ver-$rel $commit" >> $GITHUB_ENV
+            echo "TAG=passwall2_$ver-$rel" >> $GITHUB_ENV
             echo "ver=$ver" >> $GITHUB_ENV
             echo "commit=$commit" >> $GITHUB_ENV
           fi
