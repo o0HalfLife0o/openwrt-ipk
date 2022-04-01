@@ -123,6 +123,12 @@ jobs:
           git add --all
           git commit -m "$COMMIT_MSG"
           git push -u origin master
+      - name: Upload To Artifact
+        if: ${{ env.COMMIT_MSG }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: openwrt-ipk
+          path: ${{ github.workspace }}
       
   release:
     needs: check
@@ -246,9 +252,13 @@ jobs:
       CCACHE_DIR: ~/.ccache
       CONFIG_CCACHE: y
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-        
+      - uses: actions/download-artifact@v2
+        with:
+          name: openwrt-ipk
+          
+      - name: Display structure of downloaded files
+        run: ls -R
+  
       - run: |
           if [ -n "${{ env.hash }}" ]; then sed -i -e "/^PKG_HASH/s#=.*#=${{ env.hash }}#" -e "/^PKG_MIRROR_HASH/s#=.*#=${{ env.hash }}#" ${{ env.PACKAGE_NAME1 }}/Makefile; fi
           if [ -n "${{ env.ver }}" ]; then sed -i "/^PKG_VERSION/s#=.*#=${{ env.ver }}#" ${{ env.PACKAGE_NAME1 }}/Makefile; fi
