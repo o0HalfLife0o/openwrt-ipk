@@ -23,7 +23,7 @@ jobs:
       hash: ${{ env.hash }}
       commit: ${{ env.commit }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - name: Git init
@@ -85,6 +85,28 @@ jobs:
             echo "hash=$hash" >> $GITHUB_ENV
             echo "ver=$ver" >> $GITHUB_ENV
             echo "commit=" >> $GITHUB_ENV
+          fi
+      - name: Check Passwall2
+        run: |
+          commit=$(curl -sL https://github.com/xiaorouji/openwrt-passwall2/commits/main |grep -o '/xiaorouji/openwrt-passwall2/commit/[a-z0-9]\+' |head -1 | cut -d\/ -f5)
+          shortCommit=$(echo $commit |cut -c 1-20)
+          if ! git log --oneline |grep -q "$shortCommit"; then
+            wget -O /tmp/main.zip https://github.com/xiaorouji/openwrt-passwall2/archive/refs/heads/main.zip
+            unzip /tmp/main.zip openwrt-passwall2-main/luci-app-passwall2* -d /tmp
+            rm -rf luci-app-passwall2
+            mv -f  /tmp/openwrt-passwall2-main/luci-app-passwall2 luci-app-passwall2
+            ver=$(grep 'PKG_VERSION' luci-app-passwall2/Makefile |cut -d\= -f2)
+            rel=$(grep 'PKG_RELEASE' luci-app-passwall2/Makefile |cut -d\= -f2)
+            ver="${ver}-${rel}"
+            git add --all
+            sed -i '/PACKAGE_NAME/,$d' $GITHUB_ENV
+            echo "PACKAGE_NAME=passwall2" >> $GITHUB_ENV
+            echo "PACKAGE_NAME_SHORT=passwall2" >> $GITHUB_ENV
+            echo "COMMIT_MSG=passwall2_$ver $commit" >> $GITHUB_ENV
+            echo "TAG=passwall2_$ver" >> $GITHUB_ENV
+            echo "hash=skip" >> $GITHUB_ENV
+            echo "ver=$ver" >> $GITHUB_ENV
+            echo "commit=$commit" >> $GITHUB_ENV
           fi
       - name: Set Variables
         id: set
