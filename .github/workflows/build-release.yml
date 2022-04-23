@@ -22,6 +22,7 @@ jobs:
       ver: ${{ env.ver }}
       hash: ${{ env.hash }}
       commit: ${{ env.commit }}
+      ARCH_ALL: ${{ env.ARCH_ALL }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -49,6 +50,7 @@ jobs:
             echo "hash=skip" >> $GITHUB_ENV
             echo "ver=$ver" >> $GITHUB_ENV
             echo "commit=$commit" >> $GITHUB_ENV
+            echo "ARCH_ALL=" >> $GITHUB_ENV
           fi
       - name: Check Xray
         run: |
@@ -67,6 +69,7 @@ jobs:
             echo "hash=$hash" >> $GITHUB_ENV
             echo "ver=$ver" >> $GITHUB_ENV
             echo "commit=" >> $GITHUB_ENV
+            echo "ARCH_ALL=" >> $GITHUB_ENV
           fi
       - name: Check V2ray
         run: |
@@ -85,6 +88,7 @@ jobs:
             echo "hash=$hash" >> $GITHUB_ENV
             echo "ver=$ver" >> $GITHUB_ENV
             echo "commit=" >> $GITHUB_ENV
+            echo "ARCH_ALL=" >> $GITHUB_ENV
           fi
       - name: Check Passwall2
         run: |
@@ -105,6 +109,7 @@ jobs:
             echo "TAG=passwall2_$ver-$rel" >> $GITHUB_ENV
             echo "ver=$ver" >> $GITHUB_ENV
             echo "commit=$commit" >> $GITHUB_ENV
+            echo "ARCH_ALL=y" >> $GITHUB_ENV
           fi
       - name: Set Variables
         id: set
@@ -116,6 +121,7 @@ jobs:
           echo "::set-output name=ver::$ver"
           echo "::set-output name=commit::$commit"
           echo "::set-output name=hash::$hash"
+          echo "::set-output name=ARCH_ALL::$ARCH_ALL"
       - name: Push to master
         if: ${{ env.COMMIT_MSG }}
         continue-on-error: true
@@ -249,26 +255,41 @@ jobs:
       ver: ${{ needs.check.outputs.ver }}
       hash: ${{ needs.check.outputs.hash }}
       commit: ${{ needs.check.outputs.commit }}
+      ARCH_ALL: ${{ needs.check.outputs.ARCH_ALL }}
       CCACHE_DIR: ~/.ccache
       CONFIG_CCACHE: y
     steps:
+      - name: Is it ARCH for ALL?
+        id: ARCH_ALL
+        run: |
+          if [ -z "${{ env.ARCH_ALL }}" ] || [ ${{ matrix.arch }} == "aarch64_generic" ]; then
+            echo "全架构app"
+            echo "::set-output name=status::n"
+          fi
+
       - uses: actions/download-artifact@v2
+        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         with:
           name: openwrt-ipk
-          
+
       - name: Display structure of downloaded files
+        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         run: ls -R
-  
-      - run: |
+
+      - name: Set Variables
+        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
+        run: |
           if [ -n "${{ env.hash }}" ]; then sed -i -e "/^PKG_HASH/s#=.*#=${{ env.hash }}#" -e "/^PKG_MIRROR_HASH/s#=.*#=${{ env.hash }}#" ${{ env.PACKAGE_NAME1 }}/Makefile; fi
           if [ -n "${{ env.ver }}" ]; then sed -i "/^PKG_VERSION/s#=.*#=${{ env.ver }}#" ${{ env.PACKAGE_NAME1 }}/Makefile; fi
           if [ -n "${{ env.commit }}" ]; then sed -i "/^PKG_SOURCE_VERSION/s#=.*#=${{ env.commit }}#" ${{ env.PACKAGE_NAME1 }}/Makefile; fi
 
       - name: Prepare Cache Key
+        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         id: cache_key
         run: echo "::set-output name=timestamp::$(date +"%s")"
 
       - name: Setup Cache
+        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         uses: actions/cache@v2
         with:
           path: |
@@ -278,9 +299,11 @@ jobs:
           restore-keys: |
             openwrt-${{ matrix.arch }}-${{ env.PACKAGE_NAME }}-
       - name: Install Dependencies
+        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         run: |
           DEBIAN_FRONTEND=noninteractive sudo apt-get install -y ccache gettext libncurses5-dev xsltproc upx
       - name: Create Directories
+        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         run: |
           CACHE_DIR_SDK="$(eval echo "$CACHE_DIR/sdk")"
           CACHE_DIR_DL="$(eval echo "$CACHE_DIR/dl")"
@@ -296,6 +319,7 @@ jobs:
           echo "CACHE_DIR_FEEDS=$CACHE_DIR_FEEDS" >> $GITHUB_ENV
           echo "SDK_HOME=$(mktemp -d)" >> $GITHUB_ENV
       - name: Download and Unzip SDK
+        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         run: |
           cd "$CACHE_DIR_SDK"
           if ! ( wget -q -O - "$SDK_URL_PATH/sha256sums" | grep -- "$SDK_NAME" > sha256sums.small 2>/dev/null ) ; then
@@ -325,6 +349,7 @@ jobs:
           sed -i 's#git.openwrt.org/feed/telephony#github.com/openwrt/telephony#' feeds.conf
           cd -
       - name: Update and Install Packages
+        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         env:
           OPENWRT_GOLANG_COMMIT: ${{ secrets.OPENWRT_GOLANG_COMMIT }}
         run: |
@@ -337,6 +362,7 @@ jobs:
           ./scripts/feeds install -a
           cd -
       - name: Build Packages
+        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         run: |
           cd "$SDK_HOME"
           make defconfig
@@ -348,16 +374,19 @@ jobs:
           find "$SDK_HOME/bin/" -type f -name "*.ipk" -exec ls -lh {} \;
           cd -
       - name: Copy Bin Files
+        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         run: |
           find "$SDK_HOME/bin/" -type f -name "*${PACKAGE_NAME1}*.ipk" -exec cp {} "${{ github.workspace }}" \;
           find "${{ github.workspace }}" -type f -name "*.ipk" -exec ls -lh {} \;
       - name: Upload files to Artifacts
+        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         uses: actions/upload-artifact@v2
         with:
           name: ${{ env.TAG }}-${{ matrix.arch }}
           path: |
             *.ipk
       - name: Release and Upload Assets
+        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         uses: softprops/action-gh-release@v1
         with:
           name: ${{ env.TAG }}
