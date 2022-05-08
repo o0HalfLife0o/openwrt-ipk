@@ -101,6 +101,9 @@ jobs:
             mv -f  /tmp/openwrt-passwall2-main/luci-app-passwall2 luci-app-passwall2
             ver=$(grep 'PKG_VERSION' luci-app-passwall2/Makefile |cut -d\= -f2)
             rel=$(grep 'PKG_RELEASE' luci-app-passwall2/Makefile |cut -d\= -f2)
+            sed -i '/config PACKAGE.*Shadowsocks.*_Client/,+3s#default y#default n#' luci-app-passwall2/Makefile
+            sed -i '/config PACKAGE.*Simple_Obfs/,+3s#default y#default n#' luci-app-passwall2/Makefile
+            sed -i '/config PACKAGE.*V2ray_Plugin/,+3s#default y#default n#' luci-app-passwall2/Makefile
             git add --all
             sed -i '/PACKAGE_NAME/,$d' $GITHUB_ENV
             echo "PACKAGE_NAME=luci-app-passwall2" >> $GITHUB_ENV
@@ -376,7 +379,11 @@ jobs:
       - name: Copy Bin Files
         if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         run: |
-          find "$SDK_HOME/bin/" -type f -name "*${PACKAGE_NAME1}*.ipk" -exec cp {} "${{ github.workspace }}" \;
+          if echo ${PACKAGE_NAME1} |grep -q 'passwall2'; then
+            find "$SDK_HOME/bin/" -type f -name "*.ipk" -exec cp {} "${{ github.workspace }}" \;
+          else
+            find "$SDK_HOME/bin/" -type f -name "*${PACKAGE_NAME1}*.ipk" -exec cp {} "${{ github.workspace }}" \;
+          fi
           find "${{ github.workspace }}" -type f -name "*.ipk" -exec ls -lh {} \;
       - name: Upload files to Artifacts
         if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
