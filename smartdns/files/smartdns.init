@@ -20,10 +20,14 @@ USE_PROCD=1
 SERVICE_USE_PID=1
 SERVICE_WRITE_PID=1
 SERVICE_DAEMONIZE=1
+SERVICE_PID_FILE="/var/run/smartdns.pid"
 PROG="/usr/sbin/smartdns"
-PID_FILE="/var/run/smartdns.pid"
 CONF_DIR="/etc/smartdns"
 CONF="$CONF_DIR/smartdns.conf"
+
+service_triggers() {
+	procd_add_reload_trigger smartdns
+}
 
 get_tz()
 {
@@ -44,21 +48,30 @@ get_tz()
 
 start_service()
 {
-
 	procd_open_instance
 	get_tz
 	[ -z "$SET_TZ" ] || procd_set_param env TZ="$SET_TZ"
-	procd_set_param command $PROG -f -c $CONF -p $PID_FILE
+	procd_set_param command $PROG -f -c $CONF
 	procd_set_param user root
   procd_set_param respawn "${respawn_threshold:-3600}" "${respawn_timeout:-5}" "${respawn_retry:-5}"
 	procd_close_instance
 	echo "smartdns is started!"
 }
 
+stop_service()
+{
+		procd_send_signal smartdns * SIGTERM
+		sleep 2s
+		local smartdns_pid=""
+		smartdns_pid=`ps -w | grep -w "$PROG" | grep -v grep | awk '{print $1}'`
+		if [ "${smartdns_pid}" != "" ]; then
+			kill -9 ${smartdns_pid}
+		fi
+}
+
 reload_service()
 {
 	stop
-	sleep 2s
 	echo "smartdns is restarted!"
 	start
 }
