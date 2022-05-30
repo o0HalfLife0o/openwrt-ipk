@@ -18,6 +18,7 @@
 START=99
 NAME=smartdns
 USE_PROCD=1
+SERVICE_PID_FILE="/var/run/smartdns.pid"
 PROG="/usr/sbin/smartdns"
 SMARTDNS_CONF="/etc/smartdns/custom.conf"
 
@@ -40,15 +41,20 @@ get_tz()
 
 start_service()
 {
-  procd_open_instance
+  procd_open_instance smartdns
   get_tz
   [ -z "$SET_TZ" ] || procd_set_param env TZ="$SET_TZ"
   procd_set_param command $PROG -f -c $SMARTDNS_CONF
   procd_set_param respawn "${respawn_threshold:-3600}" "${respawn_timeout:-5}" "${respawn_retry:-5}"
-	procd_set_param pidfile $SERVICE_PID_FILE
+  procd_set_param pidfile $SERVICE_PID_FILE
   procd_set_param term_timeout 5
   procd_close_instance
   echo "smartdns is started!"
+}
+
+stop_service()
+{
+  procd_send_signal smartdns smartdns SIGTERM
 }
 
 reload_service()
