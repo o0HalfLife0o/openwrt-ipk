@@ -73,8 +73,8 @@ jobs:
           fi
       - name: Check V2ray
         run: |
-          latest=$(curl -sL https://github.com/v2fly/v2ray-core/releases/latest )
-          ver=$(echo "$latest"|grep -o 'tree/v[0-9]\+\.[0-9]\+\.[0-9]\+' |head -1 |cut -d v -f2)
+          latest=$(curl -sL https://github.com/v2fly/v2ray-core/releases )
+          ver=$(echo "$latest"|grep -o 'tree/v5\.[0-9]\+\.[0-9]\+' |head -1 |cut -d v -f2)
           if ! git tag -l |grep -q "v2ray_v$ver"; then
             wget https://codeload.github.com/v2fly/v2ray-core/tar.gz/v$ver
             hash=$(sha256sum v$ver |cut -d\  -f1)
