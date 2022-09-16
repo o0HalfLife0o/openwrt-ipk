@@ -30,8 +30,8 @@ jobs:
       - name: Git init
         run: |
             sed -i '/url =/d' ./.git/config
-            git config --local user.name "actions"
-            git config --local user.email "action@github.com"
+            git config --global user.email 41898282+github-actions[bot]@users.noreply.github.com
+            git config --global user.name github-actions[bot]
             git remote set-url --add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
       - name: Check Smartdns
         run: |
@@ -104,12 +104,32 @@ jobs:
             sed -i '/config PACKAGE.*Shadowsocks.*_Client/,+3s#default y#default n#' luci-app-passwall2/Makefile
             sed -i '/config PACKAGE.*Simple_Obfs/,+3s#default y#default n#' luci-app-passwall2/Makefile
             sed -i '/config PACKAGE.*V2ray_Plugin/,+3s#default y#default n#' luci-app-passwall2/Makefile
-            git add --all
             sed -i '/PACKAGE_NAME/,$d' $GITHUB_ENV
             echo "PACKAGE_NAME=luci-app-passwall2" >> $GITHUB_ENV
             echo "PACKAGE_NAME_SHORT=luci-app-passwall2" >> $GITHUB_ENV
             echo "COMMIT_MSG=luci-app-passwall2_$ver-$rel $commit" >> $GITHUB_ENV
-            echo "TAG=passwall2_$ver-$rel" >> $GITHUB_ENV
+            echo "TAG=passwall2_$ver-$rel-$shortCommit" >> $GITHUB_ENV
+            echo "ver=$ver" >> $GITHUB_ENV
+            echo "commit=$commit" >> $GITHUB_ENV
+            echo "ARCH_ALL=y" >> $GITHUB_ENV
+          fi
+      - name: Check Unblockneteasemusic
+        if: ${{ env.PACKAGE_DISABLED }}
+        run: |
+          commit=$(curl -sL https://github.com/UnblockNeteaseMusic/luci-app-unblockneteasemusic/commits/master |grep -o '/UnblockNeteaseMusic/luci-app-unblockneteasemusic/commit/[a-z0-9]\+' |head -1 | cut -d\/ -f5)
+          shortCommit=$(echo $commit |cut -c 1-20)
+          if ! git log --oneline |grep -q "$shortCommit"; then
+            wget -O /tmp/latest.zip https://github.com/UnblockNeteaseMusic/luci-app-unblockneteasemusic/archive/${commit}.zip
+            unzip /tmp/latest.zip -d /tmp
+            rm -rf luci-app-unblockneteasemusic
+            mv -f  /tmp/luci-app-unblockneteasemusic-${commit} luci-app-unblockneteasemusic
+            ver=$(grep 'PKG_VERSION' luci-app-unblockneteasemusic/Makefile |cut -d\= -f2)
+            rel=$(grep 'PKG_RELEASE' luci-app-unblockneteasemusic/Makefile |cut -d\= -f2)
+            sed -i '/PACKAGE_NAME/,$d' $GITHUB_ENV
+            echo "PACKAGE_NAME=luci-app-unblockneteasemusic" >> $GITHUB_ENV
+            echo "PACKAGE_NAME_SHORT=luci-app-unblockneteasemusic" >> $GITHUB_ENV
+            echo "COMMIT_MSG=luci-app-unblockneteasemusic_$ver-$rel $commit" >> $GITHUB_ENV
+            echo "TAG=unblockneteasemusic_$ver-$rel-$shortCommit" >> $GITHUB_ENV
             echo "ver=$ver" >> $GITHUB_ENV
             echo "commit=$commit" >> $GITHUB_ENV
             echo "ARCH_ALL=y" >> $GITHUB_ENV
@@ -265,7 +285,7 @@ jobs:
       - name: Is it ARCH for ALL?
         id: ARCH_ALL
         run: |
-          if [ -z "${{ env.ARCH_ALL }}" ] || [ ${{ matrix.arch }} == "aarch64_generic" ]; then
+          if [ -z "${{ env.ARCH_ALL }}" ] || [ ${{ matrix.arch }} == "aarch64_cortex-a53" ]; then
             echo "全架构app"
             echo "::set-output name=status::n"
           fi
