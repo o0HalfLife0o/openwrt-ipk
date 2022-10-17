@@ -137,14 +137,14 @@ jobs:
       - name: Set Variables
         id: set
         run: |
-          echo "::set-output name=PACKAGE_NAME::$PACKAGE_NAME"
-          echo "::set-output name=PACKAGE_NAME_SHORT::$PACKAGE_NAME_SHORT"
-          echo "::set-output name=COMMIT_MSG::$COMMIT_MSG"
-          echo "::set-output name=TAG::$TAG"
-          echo "::set-output name=ver::$ver"
-          echo "::set-output name=commit::$commit"
-          echo "::set-output name=hash::$hash"
-          echo "::set-output name=ARCH_ALL::$ARCH_ALL"
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          echo "PACKAGE_NAME_SHORT=$PACKAGE_NAME_SHORT" >> $GITHUB_OUTPUT
+          echo "COMMIT_MSG=$COMMIT_MSG" >> $GITHUB_OUTPUT
+          echo "TAG=$TAG" >> $GITHUB_OUTPUT
+          echo "ver=$ver" >> $GITHUB_OUTPUT
+          echo "commit=$commit" >> $GITHUB_OUTPUT
+          echo "hash=$hash" >> $GITHUB_OUTPUT
+          echo "ARCH_ALL=$ARCH_ALL" >> $GITHUB_OUTPUT
       - name: Push to master
         if: ${{ env.COMMIT_MSG }}
         continue-on-error: true
@@ -287,7 +287,7 @@ jobs:
         run: |
           if [ -z "${{ env.ARCH_ALL }}" ] || [ ${{ matrix.arch }} == "aarch64_cortex-a53" ]; then
             echo "全架构app"
-            echo "::set-output name=status::n"
+            echo "status=n" >> $GITHUB_OUTPUT
           fi
 
       - uses: actions/download-artifact@v2
@@ -309,7 +309,7 @@ jobs:
       - name: Prepare Cache Key
         if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         id: cache_key
-        run: echo "::set-output name=timestamp::$(date +"%s")"
+        run: echo "timestamp=$(date +"%s")" >> $GITHUB_OUTPUT
 
       - name: Setup Cache
         if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
