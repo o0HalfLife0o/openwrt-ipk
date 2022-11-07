@@ -414,11 +414,11 @@ jobs:
             *.ipk
       - name: Release and Upload Assets
         if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
-        uses: softprops/action-gh-release@v1
+        uses: ncipollo/release-action@v1
         with:
           name: ${{ env.TAG }}
-          tag_name: ${{ env.TAG }}
+          tag: ${{ env.TAG }}
           body: ${{ env.COMMIT_MSG }}
-          files: '*.ipk'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+          artifacts: |
+            *.ipk
