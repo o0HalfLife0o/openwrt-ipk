@@ -228,9 +228,9 @@ jobs:
           - arch: mips64_octeon
             sdk_url_path: http://downloads.openwrt.org/releases/18.06.5/targets/octeon/generic
             sdk_name: -sdk-18.06.5-octeon_
-          - arch: mips64_octeonplus
-            sdk_url_path: https://downloads.openwrt.org/snapshots/targets/octeon/generic
-            sdk_name: -sdk-octeon_
+          #- arch: mips64_octeonplus
+          #  sdk_url_path: https://downloads.openwrt.org/snapshots/targets/octeon/generic
+          #  sdk_name: -sdk-octeon_
           - arch: mipsel_24kc
             sdk_url_path: https://downloads.openwrt.org/snapshots/targets/ramips/mt7620
             sdk_name: -sdk-ramips-mt7620_
@@ -414,11 +414,11 @@ jobs:
             *.ipk
       - name: Release and Upload Assets
         if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
-        uses: softprops/action-gh-release@v1
+        uses: ncipollo/release-action@v1
         with:
           name: ${{ env.TAG }}
-          tag_name: ${{ env.TAG }}
+          tag: ${{ env.TAG }}
           body: ${{ env.COMMIT_MSG }}
-          files: '*.ipk'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
+          artifacts: |
+            *.ipk
