@@ -55,7 +55,7 @@ jobs:
       - name: Check Xray
         run: |
           latest=$(curl -sL https://github.com/XTLS/Xray-core/releases )
-          ver=$(echo "$latest"|grep -o 'tree/v[0-9]\+\.[0-9]\+\.[0-9]\+' |head -1 |cut -d v -f2)
+          ver=$(echo "$latest"|grep -o 'tree/v[0-9]\+\.[0-9]\+\.[0-9]\+\(-[0-9]\+\)\?' |head -1 |cut -d v -f2)
           if ! git tag -l |grep -q "xray_v$ver"; then
             wget https://codeload.github.com/XTLS/Xray-core/tar.gz/v$ver
             hash=$(sha256sum v$ver |cut -d\  -f1)
@@ -154,7 +154,7 @@ jobs:
           git push -u origin master
       - name: Upload To Artifact
         if: ${{ env.COMMIT_MSG }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: openwrt-ipk
           path: ${{ github.workspace }}
@@ -201,9 +201,9 @@ jobs:
           #- arch: arm_cortex-a9_neon
           #  sdk_url_path: https://downloads.openwrt.org/snapshots/targets/imx6/generic
           #  sdk_name: -sdk-imx6_
-          - arch: arm_cortex-a9_vfpv3
-            sdk_url_path: https://downloads.openwrt.org/releases/19.07.2/targets/mvebu/cortexa9
-            sdk_name: -sdk-19.07.2-mvebu-cortexa9_
+          #- arch: arm_cortex-a9_vfpv3
+          #  sdk_url_path: https://downloads.openwrt.org/releases/19.07.2/targets/mvebu/cortexa9
+          #  sdk_name: -sdk-19.07.2-mvebu-cortexa9_
           - arch: arm_cortex-a9_vfpv3-d16
             sdk_url_path: https://downloads.openwrt.org/snapshots/targets/mvebu/cortexa9
             sdk_name: -sdk-mvebu-cortexa9_
@@ -216,18 +216,18 @@ jobs:
           # - arch: arm_mpcore_vfp
           #   sdk_url_path: https://downloads.openwrt.org/snapshots/targets/cns3xxx/generic
           #   sdk_name: -sdk-cns3xxx_
-          - arch: arm_xscale
-            sdk_url_path: https://downloads.openwrt.org/snapshots/targets/kirkwood/generic
-            sdk_name: -sdk-kirkwood_
+          #- arch: arm_xscale
+          #  sdk_url_path: https://downloads.openwrt.org/snapshots/targets/kirkwood/generic
+          #  sdk_name: -sdk-kirkwood_
           - arch: i386_pentium
             sdk_url_path: https://downloads.openwrt.org/snapshots/targets/x86/legacy
             sdk_name: -sdk-x86-legacy_
           - arch: i386_pentium4
             sdk_url_path: https://downloads.openwrt.org/snapshots/targets/x86/generic
             sdk_name: -sdk-x86-generic_
-          - arch: mips64_octeon
-            sdk_url_path: http://downloads.openwrt.org/releases/18.06.5/targets/octeon/generic
-            sdk_name: -sdk-18.06.5-octeon_
+          #- arch: mips64_octeon
+          #  sdk_url_path: http://downloads.openwrt.org/releases/18.06.5/targets/octeon/generic
+          #  sdk_name: -sdk-18.06.5-octeon_
           #- arch: mips64_octeonplus
           #  sdk_url_path: https://downloads.openwrt.org/snapshots/targets/octeon/generic
           #  sdk_name: -sdk-octeon_
@@ -290,7 +290,7 @@ jobs:
             echo "status=n" >> $GITHUB_OUTPUT
           fi
 
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         with:
           name: openwrt-ipk
@@ -313,7 +313,7 @@ jobs:
 
       - name: Setup Cache
         if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ${{ env.CACHE_DIR }}
@@ -407,7 +407,7 @@ jobs:
           find "${{ github.workspace }}" -type f -name "*.ipk" -exec ls -lh {} \;
       - name: Upload files to Artifacts
         if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ env.TAG }}-${{ matrix.arch }}
           path: |
