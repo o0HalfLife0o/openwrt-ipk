@@ -91,6 +91,7 @@ jobs:
             echo "ARCH_ALL=" >> $GITHUB_ENV
           fi
       - name: Check Passwall2
+        if: ${{ env.PACKAGE_DISABLED }}
         run: |
           commit=$(curl -sL https://github.com/xiaorouji/openwrt-passwall2/commits/main |grep -o '/xiaorouji/openwrt-passwall2/commit/[a-z0-9]\+' |head -1 | cut -d\/ -f5)
           shortCommit=$(echo $commit |cut -c 1-20)
