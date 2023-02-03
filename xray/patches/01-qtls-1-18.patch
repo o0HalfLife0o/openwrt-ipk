@@ -1,0 +1,36 @@
+diff --git a/common/protocol/quic/qtls_go118.go b/common/protocol/quic/qtls_go118.go
+index e701adf..61414fe 100644
+--- a/common/protocol/quic/qtls_go118.go
++++ b/common/protocol/quic/qtls_go118.go
+@@ -3,7 +3,7 @@ package quic
+ import (
+ 	"crypto/cipher"
+ 
+-	"github.com/quic-go/qtls-go1-20"
++	"github.com/quic-go/qtls-go1-18"
+ )
+ 
+ type (
+diff --git a/go.mod b/go.mod
+index 49d8a74..70e2d3d 100644
+--- a/go.mod
++++ b/go.mod
+@@ -11,7 +11,7 @@ require (
+ 	github.com/miekg/dns v1.1.50
+ 	github.com/pelletier/go-toml v1.9.5
+ 	github.com/pires/go-proxyproto v0.6.2
+-	github.com/quic-go/qtls-go1-20 v0.1.0
++	github.com/quic-go/qtls-go1-18 v0.2.0
+ 	github.com/quic-go/quic-go v0.32.0
+ 	github.com/refraction-networking/utls v1.2.0
+ 	github.com/sagernet/sing v0.1.6
+@@ -44,8 +44,8 @@ require (
+ 	github.com/klauspost/cpuid/v2 v2.2.3 // indirect
+ 	github.com/onsi/ginkgo/v2 v2.8.0 // indirect
+ 	github.com/pmezard/go-difflib v1.0.0 // indirect
+-	github.com/quic-go/qtls-go1-18 v0.2.0 // indirect
+ 	github.com/quic-go/qtls-go1-19 v0.2.0 // indirect
++	github.com/quic-go/qtls-go1-20 v0.1.0 // indirect
+ 	github.com/riobard/go-bloom v0.0.0-20200614022211-cdc8013cb5b3 // indirect
+ 	go.uber.org/atomic v1.10.0 // indirect
+ 	golang.org/x/exp v0.0.0-20230131160201-f062dba9d201 // indirect
