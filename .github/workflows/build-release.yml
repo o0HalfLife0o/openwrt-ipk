@@ -22,7 +22,6 @@ jobs:
       ver: ${{ env.ver }}
       hash: ${{ env.hash }}
       commit: ${{ env.commit }}
-      ARCH_ALL: ${{ env.ARCH_ALL }}
     steps:
       - uses: actions/checkout@v3
         with:
@@ -50,7 +49,6 @@ jobs:
             echo "hash=skip" >> $GITHUB_ENV
             echo "ver=$ver" >> $GITHUB_ENV
             echo "commit=$commit" >> $GITHUB_ENV
-            echo "ARCH_ALL=" >> $GITHUB_ENV
           fi
       - name: Check Xray
         run: |
@@ -69,7 +67,6 @@ jobs:
             echo "hash=$hash" >> $GITHUB_ENV
             echo "ver=$ver" >> $GITHUB_ENV
             echo "commit=" >> $GITHUB_ENV
-            echo "ARCH_ALL=" >> $GITHUB_ENV
           fi
       - name: Check V2ray
         run: |
@@ -88,52 +85,6 @@ jobs:
             echo "hash=$hash" >> $GITHUB_ENV
             echo "ver=$ver" >> $GITHUB_ENV
             echo "commit=" >> $GITHUB_ENV
-            echo "ARCH_ALL=" >> $GITHUB_ENV
-          fi
-      - name: Check Passwall2
-        if: ${{ env.PACKAGE_DISABLED }}
-        run: |
-          commit=$(curl -sL https://github.com/xiaorouji/openwrt-passwall2/commits/main |grep -o '/xiaorouji/openwrt-passwall2/commit/[a-z0-9]\+' |head -1 | cut -d\/ -f5)
-          shortCommit=$(echo $commit |cut -c 1-20)
-          if ! git log --oneline |grep -q "$shortCommit"; then
-            wget -O /tmp/main.zip https://github.com/xiaorouji/openwrt-passwall2/archive/refs/heads/main.zip
-            unzip /tmp/main.zip openwrt-passwall2-main/luci-app-passwall2* -d /tmp
-            rm -rf luci-app-passwall2
-            mv -f  /tmp/openwrt-passwall2-main/luci-app-passwall2 luci-app-passwall2
-            ver=$(grep 'PKG_VERSION' luci-app-passwall2/Makefile |cut -d\= -f2)
-            rel=$(grep 'PKG_RELEASE' luci-app-passwall2/Makefile |cut -d\= -f2)
-            sed -i '/config PACKAGE.*Shadowsocks.*_Client/,+3s#default y#default n#' luci-app-passwall2/Makefile
-            sed -i '/config PACKAGE.*Simple_Obfs/,+3s#default y#default n#' luci-app-passwall2/Makefile
-            sed -i '/config PACKAGE.*V2ray_Plugin/,+3s#default y#default n#' luci-app-passwall2/Makefile
-            sed -i '/PACKAGE_NAME/,$d' $GITHUB_ENV
-            echo "PACKAGE_NAME=luci-app-passwall2" >> $GITHUB_ENV
-            echo "PACKAGE_NAME_SHORT=luci-app-passwall2" >> $GITHUB_ENV
-            echo "COMMIT_MSG=luci-app-passwall2_$ver-$rel $commit" >> $GITHUB_ENV
-            echo "TAG=passwall2_$ver-$rel-$shortCommit" >> $GITHUB_ENV
-            echo "ver=$ver" >> $GITHUB_ENV
-            echo "commit=$commit" >> $GITHUB_ENV
-            echo "ARCH_ALL=y" >> $GITHUB_ENV
-          fi
-      - name: Check Unblockneteasemusic
-        if: ${{ env.PACKAGE_DISABLED }}
-        run: |
-          commit=$(curl -sL https://github.com/UnblockNeteaseMusic/luci-app-unblockneteasemusic/commits/master |grep -o '/UnblockNeteaseMusic/luci-app-unblockneteasemusic/commit/[a-z0-9]\+' |head -1 | cut -d\/ -f5)
-          shortCommit=$(echo $commit |cut -c 1-20)
-          if ! git log --oneline |grep -q "$shortCommit"; then
-            wget -O /tmp/latest.zip https://github.com/UnblockNeteaseMusic/luci-app-unblockneteasemusic/archive/${commit}.zip
-            unzip /tmp/latest.zip -d /tmp
-            rm -rf luci-app-unblockneteasemusic
-            mv -f  /tmp/luci-app-unblockneteasemusic-${commit} luci-app-unblockneteasemusic
-            ver=$(grep 'PKG_VERSION' luci-app-unblockneteasemusic/Makefile |cut -d\= -f2)
-            rel=$(grep 'PKG_RELEASE' luci-app-unblockneteasemusic/Makefile |cut -d\= -f2)
-            sed -i '/PACKAGE_NAME/,$d' $GITHUB_ENV
-            echo "PACKAGE_NAME=luci-app-unblockneteasemusic" >> $GITHUB_ENV
-            echo "PACKAGE_NAME_SHORT=luci-app-unblockneteasemusic" >> $GITHUB_ENV
-            echo "COMMIT_MSG=luci-app-unblockneteasemusic_$ver-$rel $commit" >> $GITHUB_ENV
-            echo "TAG=unblockneteasemusic_$ver-$rel-$shortCommit" >> $GITHUB_ENV
-            echo "ver=$ver" >> $GITHUB_ENV
-            echo "commit=$commit" >> $GITHUB_ENV
-            echo "ARCH_ALL=y" >> $GITHUB_ENV
           fi
       - name: Set Variables
         id: set
@@ -145,7 +96,6 @@ jobs:
           echo "ver=$ver" >> $GITHUB_OUTPUT
           echo "commit=$commit" >> $GITHUB_OUTPUT
           echo "hash=$hash" >> $GITHUB_OUTPUT
-          echo "ARCH_ALL=$ARCH_ALL" >> $GITHUB_OUTPUT
       - name: Push to master
         if: ${{ env.COMMIT_MSG }}
         continue-on-error: true
@@ -157,10 +107,12 @@ jobs:
         if: ${{ env.COMMIT_MSG }}
         uses: actions/upload-artifact@v3
         with:
-          name: openwrt-ipk
-          path: ${{ github.workspace }}
+          name: source-code
+          path: |
+            ${{ github.workspace }}
+            !${{ github.workspace }}/.**
       
-  release:
+  build:
     needs: check
     if: ${{ needs.check.outputs.PACKAGE_NAME }}
     name: Build for ${{ matrix.arch }}
@@ -280,36 +232,23 @@ jobs:
       ver: ${{ needs.check.outputs.ver }}
       hash: ${{ needs.check.outputs.hash }}
       commit: ${{ needs.check.outputs.commit }}
-      ARCH_ALL: ${{ needs.check.outputs.ARCH_ALL }}
       CCACHE_DIR: ~/.ccache
       CONFIG_CCACHE: y
     steps:
-      - name: Is it ARCH for ALL?
-        id: ARCH_ALL
-        run: |
-          if [ -z "${{ env.ARCH_ALL }}" ] || [ ${{ matrix.arch }} == "aarch64_cortex-a53" ]; then
-            echo "全架构app"
-            echo "status=n" >> $GITHUB_OUTPUT
-          fi
-
       - uses: actions/download-artifact@v3
-        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         with:
-          name: openwrt-ipk
+          name: source-code
 
       - name: Display structure of downloaded files
-        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         run: ls -R
 
       - name: Set Variables
-        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         run: |
           if [ -n "${{ env.hash }}" ]; then sed -i -e "/^PKG_HASH/s#=.*#=${{ env.hash }}#" -e "/^PKG_MIRROR_HASH/s#=.*#=${{ env.hash }}#" ${{ env.PACKAGE_NAME1 }}/Makefile; fi
           if [ -n "${{ env.ver }}" ]; then sed -i "/^PKG_VERSION/s#=.*#=${{ env.ver }}#" ${{ env.PACKAGE_NAME1 }}/Makefile; fi
           if [ -n "${{ env.commit }}" ]; then sed -i "/^PKG_SOURCE_VERSION/s#=.*#=${{ env.commit }}#" ${{ env.PACKAGE_NAME1 }}/Makefile; fi
 
       - name: Setup Cache
-        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         uses: actions/cache@v3
         with:
           path: |
@@ -319,11 +258,9 @@ jobs:
           restore-keys: |
             openwrt-${{ matrix.arch }}-
       - name: Install Dependencies
-        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         run: |
           DEBIAN_FRONTEND=noninteractive sudo apt-get install -y ccache gettext libncurses5-dev xsltproc upx
       - name: Create Directories
-        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         run: |
           CACHE_DIR_SDK="$(eval echo "$CACHE_DIR/sdk")"
           CACHE_DIR_DL="$(eval echo "$CACHE_DIR/dl")"
@@ -339,7 +276,6 @@ jobs:
           echo "CACHE_DIR_FEEDS=$CACHE_DIR_FEEDS" >> $GITHUB_ENV
           echo "SDK_HOME=$(mktemp -d)" >> $GITHUB_ENV
       - name: Download and Unzip SDK
-        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         run: |
           cd "$CACHE_DIR_SDK"
           if echo "$SDK_CHANEL_VERSION" |grep -q '^[0-9]'; then
@@ -377,7 +313,6 @@ jobs:
           sed -i 's#git.openwrt.org/feed/telephony#github.com/openwrt/telephony#' feeds.conf
           cd -
       - name: Update and Install Packages
-        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         env:
           OPENWRT_GOLANG_COMMIT: ${{ secrets.OPENWRT_GOLANG_COMMIT }}
         run: |
@@ -390,7 +325,6 @@ jobs:
           ./scripts/feeds install -a
           cd -
       - name: Build Packages
-        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         run: |
           cd "$SDK_HOME"
           make defconfig
@@ -402,7 +336,6 @@ jobs:
           find "$SDK_HOME/bin/" -type f -name "*.ipk" -exec ls -lh {} \;
           cd -
       - name: Copy Bin Files
-        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         run: |
           if echo ${PACKAGE_NAME1} |grep -q 'passwall2'; then
             find "$SDK_HOME/bin/" -type f -name "*.ipk" -exec cp {} "${{ github.workspace }}" \;
@@ -411,14 +344,21 @@ jobs:
           fi
           find "${{ github.workspace }}" -type f -name "*.ipk" -exec ls -lh {} \;
       - name: Upload files to Artifacts
-        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.TAG }}-${{ matrix.arch }}
           path: |
             *.ipk
+
+  release:
+    needs: [check, build]
+    runs-on: ubuntu-latest
+    env:
+      COMMIT_MSG: ${{ needs.check.outputs.COMMIT_MSG }}
+      TAG: ${{ needs.check.outputs.TAG }}
+    steps:
+      - uses: actions/download-artifact@v3
       - name: Release and Upload Assets
-        if: ${{ steps.ARCH_ALL.outputs.status == 'n' }}
         uses: ncipollo/release-action@v1
         with:
           name: ${{ env.TAG }}
@@ -426,4 +366,4 @@ jobs:
           body: ${{ env.COMMIT_MSG }}
           allowUpdates: true
           artifacts: |
-            *.ipk
+            **/*.ipk
