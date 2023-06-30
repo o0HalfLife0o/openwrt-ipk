@@ -39,7 +39,10 @@ jobs:
           commit=$(curl -sL https://github.com/pymumu/smartdns/commits/master |grep -o '/pymumu/smartdns/commit/[a-z0-9]\+' |head -1 | cut -d\/ -f5)
           shortCommit=$(echo $commit |cut -c 1-20)
           if ! git log --oneline |grep -q "$shortCommit"; then
-            sed -i -e '/^PKG_MIRROR_HASH/s#=.*#=skip#' -e "/^PKG_VERSION/s#=.*#=$ver#" -e "/^PKG_SOURCE_VERSION/s#=.*#=$commit#" smartdns/Makefile
+            rm -rf smartdns
+            svn co https://github.com/pymumu/smartdns/trunk/package/openwrt smartdns
+            rm -rf smartdns/.svn
+            sed -i -e "/^PKG_VERSION/s#=.*#=$ver#" -e "/^PKG_SOURCE_VERSION/s#=.*#=$commit#" smartdns/Makefile
             git add --all
             sed -i '/PACKAGE_NAME/,$d' $GITHUB_ENV
             echo "PACKAGE_NAME=smartdns" >> $GITHUB_ENV
