@@ -6,13 +6,13 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=smartdns
-PKG_VERSION:=1.2023.11.15-0009
+PKG_VERSION:=1.2023.11.15-1308
 PKG_RELEASE:=1
 
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://www.github.com/pymumu/smartdns.git
 PKG_MIRROR_HASH:=skip
-PKG_SOURCE_VERSION:=b3e16c3c6014a6cb880f0c4a772c63acf1eecd51
+PKG_SOURCE_VERSION:=4853a964c16eb91b26f2a2f9c23706109cdd0e70
 
 PKG_MAINTAINER:=Nick Peng <pymumu@gmail.com>
 PKG_LICENSE:=GPL-3.0-or-later
@@ -56,6 +56,8 @@ define Package/smartdns/install
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/package/openwrt/address.conf $(1)/etc/smartdns/address.conf
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/package/openwrt/blacklist-ip.conf $(1)/etc/smartdns/blacklist-ip.conf
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/package/openwrt/custom.conf $(1)/etc/smartdns/custom.conf
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/package/openwrt/domain-block.list $(1)/etc/smartdns/domain-block.list
+	$(INSTALL_CONF) $(PKG_BUILD_DIR)/package/openwrt/domain-forwarding.list $(1)/etc/smartdns/domain-forwarding.list
 	$(INSTALL_CONF) $(PKG_BUILD_DIR)/package/openwrt/files/etc/config/smartdns $(1)/etc/config/smartdns
 endef
 
