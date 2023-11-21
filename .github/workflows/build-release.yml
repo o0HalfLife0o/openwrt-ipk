@@ -37,21 +37,24 @@ jobs:
           latest=$(curl -sL https://github.com/pymumu/smartdns/releases )
           ver="1.$(date -d "8 hour" -u +%Y.%m.%d-%H%M)"
           commit=$(curl -sL https://github.com/pymumu/smartdns/commits/master |grep -o '/pymumu/smartdns/commit/[a-z0-9]\+' |head -1 | cut -d\/ -f5)
-          shortCommit=$(echo $commit |cut -c 1-20)
-          if ! git log --oneline |grep -q "$shortCommit"; then
-            rm -rf smartdns
-            svn co https://github.com/pymumu/smartdns/trunk/package/openwrt smartdns
-            rm -rf smartdns/.svn
-            sed -i -e "/^PKG_VERSION/s#=.*#=$ver#" -e "/^PKG_SOURCE_VERSION/s#=.*#=$commit#" smartdns/Makefile
-            git add --all
-            sed -i '/PACKAGE_NAME/,$d' $GITHUB_ENV
-            echo "PACKAGE_NAME=smartdns" >> $GITHUB_ENV
-            echo "PACKAGE_NAME_SHORT=smartdns" >> $GITHUB_ENV
-            echo "COMMIT_MSG=smartdns_$ver $commit" >> $GITHUB_ENV
-            echo "TAG=smartdns_$ver" >> $GITHUB_ENV
-            echo "hash=skip" >> $GITHUB_ENV
-            echo "ver=$ver" >> $GITHUB_ENV
-            echo "commit=$commit" >> $GITHUB_ENV
+          commitStatus="$(curl -sL https://github.com/pymumu/smartdns/commit/$commit/status-details -H 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8')"
+          if ! echo "$commitStatus" |grep -q 'fail'; then
+            shortCommit=$(echo $commit |cut -c 1-20)
+            if ! git log --oneline | grep -q "$shortCommit"; then
+              rm -rf smartdns
+              svn co https://github.com/pymumu/smartdns/trunk/package/openwrt smartdns
+              rm -rf smartdns/.svn
+              sed -i -e "/^PKG_VERSION/s#=.*#=$ver#" -e "/^PKG_SOURCE_VERSION/s#=.*#=$commit#" smartdns/Makefile
+              git add --all
+              sed -i '/PACKAGE_NAME/,$d' $GITHUB_ENV
+              echo "PACKAGE_NAME=smartdns" >> $GITHUB_ENV
+              echo "PACKAGE_NAME_SHORT=smartdns" >> $GITHUB_ENV
+              echo "COMMIT_MSG=smartdns_$ver $commit" >> $GITHUB_ENV
+              echo "TAG=smartdns_$ver" >> $GITHUB_ENV
+              echo "hash=skip" >> $GITHUB_ENV
+              echo "ver=$ver" >> $GITHUB_ENV
+              echo "commit=$commit" >> $GITHUB_ENV
+            fi
           fi
       - name: Check Xray
         run: |
