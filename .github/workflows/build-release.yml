@@ -23,7 +23,7 @@ jobs:
       hash: ${{ env.hash }}
       commit: ${{ env.commit }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Git init
@@ -42,10 +42,6 @@ jobs:
             shortCommit=$(echo $commit |cut -c 1-20)
             if ! git log --oneline | grep -q "$shortCommit"; then
               rm -rf smartdns
-              svn co https://github.com/pymumu/smartdns/trunk/package/openwrt smartdns
-              rm -rf smartdns/.svn
-              sed -i -e "/^PKG_VERSION/s#=.*#=$ver#" -e "/^PKG_SOURCE_VERSION/s#=.*#=$commit#" smartdns/Makefile
-              git add --all
               sed -i '/PACKAGE_NAME/,$d' $GITHUB_ENV
               echo "PACKAGE_NAME=smartdns" >> $GITHUB_ENV
               echo "PACKAGE_NAME_SHORT=smartdns" >> $GITHUB_ENV
@@ -56,6 +52,21 @@ jobs:
               echo "commit=$commit" >> $GITHUB_ENV
             fi
           fi
+      - name: Downloading Smartdns
+        if: ${{ env.COMMIT_MSG }}
+        uses: actions/checkout@v4
+        with:
+          repository: pymumu/smartdns
+          ref: ${{ env.commit }}
+          sparse-checkout: package/openwrt/
+          sparse-checkout-cone-mode: false
+          path: tmp-file
+      - name: Prepare Smartdns
+        if: ${{ env.COMMIT_MSG }}
+        run: |
+          mv -f tmp-file/package/openwrt/ smartdns/
+          rm -rf tmp-file
+          sed -i -e "/^PKG_VERSION/s#=.*#=${{ env.ver }}#" -e "/^PKG_SOURCE_VERSION/s#=.*#=${{ env.commit }}#" smartdns/Makefile
       - name: Check Xray
         run: |
           latest=$(curl -sL https://github.com/XTLS/Xray-core/releases )
@@ -228,7 +239,7 @@ jobs:
           #   sdk_name: mpc85xx-generic
 
     env:
-      SDK_CHANEL_VERSION: 21.02.5
+      SDK_CHANEL_VERSION: 22.03.6
       SDK_URL_PATH: ${{ matrix.sdk_url_path }}
       SDK_NAME: ${{ matrix.sdk_name }}
       PACKAGE_NAME: ${{ needs.check.outputs.PACKAGE_NAME }}
