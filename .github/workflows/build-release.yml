@@ -68,6 +68,7 @@ jobs:
           rm -rf tmp-file
           sed -i -e "/^PKG_VERSION/s#=.*#=${{ env.ver }}#" -e "/^PKG_SOURCE_VERSION/s#=.*#=${{ env.commit }}#" smartdns/Makefile
       - name: Check Xray
+        if: ${{ !env.COMMIT_MSG }}
         run: |
           latest=$(curl -sL https://github.com/XTLS/Xray-core/releases )
           ver=$(echo "$latest"|grep -o 'tree/v[0-9]\+\.[0-9]\+\.[0-9]\+\(-[0-9]\+\)\?' |head -1 |cut -d v -f2)
@@ -86,6 +87,7 @@ jobs:
             echo "commit=" >> $GITHUB_ENV
           fi
       - name: Check V2ray
+        if: ${{ !env.COMMIT_MSG }}
         run: |
           latest=$(curl -sL https://github.com/v2fly/v2ray-core/releases )
           ver=$(echo "$latest"|grep -o 'tree/v5\.[0-9]\+\.[0-9]\+' |head -1 |cut -d v -f2)
@@ -177,9 +179,6 @@ jobs:
           - arch: arm_cortex-a9_vfpv3-d16
             sdk_url_path: mvebu/cortexa9
             sdk_name: mvebu-cortexa9
-          - arch: arm_fa526
-            sdk_url_path: gemini/generic
-            sdk_name: gemini
           - arch: arm_mpcore
             sdk_url_path: oxnas/ox820
             sdk_name: oxnas-ox820
@@ -204,9 +203,6 @@ jobs:
           - arch: mipsel_24kc
             sdk_url_path: ramips/mt7620
             sdk_name: ramips-mt7620
-          - arch: mipsel_24kc_24kf
-            sdk_url_path: pistachio/generic
-            sdk_name: pistachio
           - arch: mipsel_74kc
             sdk_url_path: bcm47xx/mips74k
             sdk_name: bcm47xx-mips74k
@@ -239,7 +235,7 @@ jobs:
           #   sdk_name: mpc85xx-generic
 
     env:
-      SDK_CHANEL_VERSION: 22.03.6
+      SDK_CHANEL_VERSION: 23.05.2
       SDK_URL_PATH: ${{ matrix.sdk_url_path }}
       SDK_NAME: ${{ matrix.sdk_name }}
       PACKAGE_NAME: ${{ needs.check.outputs.PACKAGE_NAME }}
