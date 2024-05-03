@@ -91,7 +91,9 @@ jobs:
         run: |
           latest=$(curl -sL https://github.com/v2fly/v2ray-core/releases )
           ver=$(echo "$latest"|grep -o 'tree/v5\.[0-9]\+\.[0-9]\+' |head -1 |cut -d v -f2)
-          if ! git tag -l |grep -q "v2ray_v$ver"; then
+          nowV=$(grep '^PKG_VERSION' v2ray/Makefile | cut -d = -f2)
+          if [ "$ver" != "$nowV" ]; then
+          #if ! git tag -l |grep -q "v2ray_v$ver"; then
             wget https://codeload.github.com/v2fly/v2ray-core/tar.gz/v$ver
             hash=$(sha256sum v$ver |cut -d\  -f1)
             rm -f v$ver
@@ -131,6 +133,14 @@ jobs:
             ${{ github.workspace }}
             !${{ github.workspace }}/.**
       
+      - name: Delete older workflow runs and artifacts
+        uses: Mattraks/delete-workflow-runs@main
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          retain_days: 14
+          keep_minimum_runs: 10
+
   build:
     needs: check
     if: ${{ needs.check.outputs.PACKAGE_NAME }}
@@ -170,21 +180,15 @@ jobs:
           - arch: arm_cortex-a9
             sdk_url_path: bcm53xx/generic
             sdk_name: bcm53xx-generic
-          #- arch: arm_cortex-a9_neon
-          #  sdk_url_path: imx6/generic
-          #  sdk_name: imx6
-          #- arch: arm_cortex-a9_vfpv3
-          #  sdk_url_path: https://downloads.openwrt.org/releases/19.07.2/targets/mvebu/cortexa9
-          #  sdk_name: 19.07.2-mvebu-cortexa9
+          - arch: arm_cortex-a9_vfpv3
+            sdk_url_path: mvebu/cortexa9
+            sdk_name: mvebu-cortexa9
           - arch: arm_cortex-a9_vfpv3-d16
             sdk_url_path: mvebu/cortexa9
             sdk_name: mvebu-cortexa9
           - arch: arm_mpcore
             sdk_url_path: oxnas/ox820
             sdk_name: oxnas-ox820
-          # - arch: arm_mpcore_vfp
-          #   sdk_url_path: cns3xxx/generic
-          #   sdk_name: cns3xxx
           #- arch: arm_xscale
           #  sdk_url_path: kirkwood/generic
           #  sdk_name: kirkwood
@@ -194,9 +198,6 @@ jobs:
           - arch: i386_pentium4
             sdk_url_path: x86/generic
             sdk_name: x86-generic
-          #- arch: mips64_octeon
-          #  sdk_url_path: http://downloads.openwrt.org/releases/18.06.5/targets/octeon/generic
-          #  sdk_name: 18.06.5-octeon
           #- arch: mips64_octeonplus
           #  sdk_url_path: octeon/generic
           #  sdk_name: octeon
