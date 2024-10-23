@@ -10,6 +10,7 @@ on:
 
 env:
   CACHE_DIR: ~/cache
+  SDK_CHANNEL_VERSION: 23.05
 
 jobs:
   check:
@@ -22,6 +23,7 @@ jobs:
       ver: ${{ env.ver }}
       hash: ${{ env.hash }}
       commit: ${{ env.commit }}
+      SDK_CHANNEL_VERSION : ${{ steps.set.outputs.SDK_CHANNEL_VERSION }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -86,30 +88,12 @@ jobs:
             echo "ver=$ver" >> $GITHUB_ENV
             echo "commit=" >> $GITHUB_ENV
           fi
-      - name: Check V2ray
-        if: ${{ !env.COMMIT_MSG }}
-        run: |
-          latest=$(curl -sL https://github.com/v2fly/v2ray-core/releases )
-          ver=$(echo "$latest"|grep -o 'tree/v5\.[0-9]\+\.[0-9]\+' |head -1 |cut -d v -f2)
-          nowV=$(grep '^PKG_VERSION' v2ray/Makefile | cut -d = -f2)
-          if [ "$ver" != "$nowV" ]; then
-          #if ! git tag -l |grep -q "v2ray_v$ver"; then
-            wget https://codeload.github.com/v2fly/v2ray-core/tar.gz/v$ver
-            hash=$(sha256sum v$ver |cut -d\  -f1)
-            rm -f v$ver
-            sed -i -e "/^PKG_HASH/s#=.*#=$hash#" -e "/^PKG_VERSION/s#=.*#=$ver#" v2ray/Makefile
-            sed -i '/PACKAGE_NAME/,$d' $GITHUB_ENV
-            echo "PACKAGE_NAME=v2ray-core" >> $GITHUB_ENV
-            echo "PACKAGE_NAME_SHORT=v2ray" >> $GITHUB_ENV
-            echo "COMMIT_MSG=v2ray_v$ver" >> $GITHUB_ENV
-            echo "TAG=v2ray_v$ver" >> $GITHUB_ENV
-            echo "hash=$hash" >> $GITHUB_ENV
-            echo "ver=$ver" >> $GITHUB_ENV
-            echo "commit=" >> $GITHUB_ENV
-          fi
       - name: Set Variables
+        if: ${{ env.COMMIT_MSG }}
         id: set
         run: |
+          SDK_CHANNEL_VERSION=$(curl -sL https://downloads.openwrt.org/ |grep -o "${{ env.SDK_CHANNEL_VERSION }}.[0-9]/targets" |cut -d\/ -f1 |head -1)
+          echo "SDK_CHANNEL_VERSION=$SDK_CHANNEL_VERSION" >> $GITHUB_OUTPUT
           echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_OUTPUT
           echo "PACKAGE_NAME_SHORT=$PACKAGE_NAME_SHORT" >> $GITHUB_OUTPUT
           echo "COMMIT_MSG=$COMMIT_MSG" >> $GITHUB_OUTPUT
@@ -236,9 +220,9 @@ jobs:
           #   sdk_name: mpc85xx-generic
 
     env:
-      SDK_CHANEL_VERSION: 23.05.2
       SDK_URL_PATH: ${{ matrix.sdk_url_path }}
       SDK_NAME: ${{ matrix.sdk_name }}
+      SDK_CHANEL_VERSION: ${{ needs.check.outputs.SDK_CHANNEL_VERSION }}
       PACKAGE_NAME: ${{ needs.check.outputs.PACKAGE_NAME }}
       PACKAGE_NAME1: ${{ needs.check.outputs.PACKAGE_NAME1 }}
       COMMIT_MSG: ${{ needs.check.outputs.COMMIT_MSG }}
