@@ -10,7 +10,7 @@ on:
 
 env:
   CACHE_DIR: ~/cache
-  SDK_CHANNEL_VERSION: 23.05
+  SDK_CHANNEL_VERSION: 24.10
 
 jobs:
   check:
