@@ -170,9 +170,9 @@ jobs:
           - arch: arm_cortex-a9_vfpv3-d16
             sdk_url_path: mvebu/cortexa9
             sdk_name: mvebu-cortexa9
-          - arch: arm_mpcore
-            sdk_url_path: oxnas/ox820
-            sdk_name: oxnas-ox820
+          #- arch: arm_mpcore
+          #  sdk_url_path: oxnas/ox820
+          #  sdk_name: oxnas-ox820
           #- arch: arm_xscale
           #  sdk_url_path: kirkwood/generic
           #  sdk_name: kirkwood
@@ -197,9 +197,9 @@ jobs:
           - arch: mips_24kc
             sdk_url_path: ath79/generic
             sdk_name: ath79-generic
-          - arch: mips_mips32
-            sdk_url_path: bcm63xx/generic
-            sdk_name: bcm63xx-generic
+          #- arch: mips_mips32
+          #  sdk_url_path: bcm63xx/generic
+          #  sdk_name: bcm63xx-generic
           - arch: x86_64
             sdk_url_path: x86/64
             sdk_name: x86-64
