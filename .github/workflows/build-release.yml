@@ -10,7 +10,7 @@ on:
 
 env:
   CACHE_DIR: ~/cache
-  SDK_CHANNEL_VERSION: 23.05
+  SDK_CHANNEL_VERSION: 24.10
 
 jobs:
   check:
@@ -222,7 +222,7 @@ jobs:
     env:
       SDK_URL_PATH: ${{ matrix.sdk_url_path }}
       SDK_NAME: ${{ matrix.sdk_name }}
-      SDK_CHANEL_VERSION: ${{ needs.check.outputs.SDK_CHANNEL_VERSION }}
+      SDK_CHANNEL_VERSION: ${{ needs.check.outputs.SDK_CHANNEL_VERSION }}
       PACKAGE_NAME: ${{ needs.check.outputs.PACKAGE_NAME }}
       PACKAGE_NAME1: ${{ needs.check.outputs.PACKAGE_NAME1 }}
       COMMIT_MSG: ${{ needs.check.outputs.COMMIT_MSG }}
@@ -276,14 +276,14 @@ jobs:
       - name: Download and Unzip SDK
         run: |
           cd "$CACHE_DIR_SDK"
-          if echo "$SDK_CHANEL_VERSION" |grep -q '^[0-9]'; then
-            SDK_NAME="sdk-${SDK_CHANEL_VERSION}-${SDK_NAME}_"
-            SDK_CHANEL_VERSION="releases/${SDK_CHANEL_VERSION}"
+          if echo "$SDK_CHANNEL_VERSION" |grep -q '^[0-9]'; then
+            SDK_NAME="sdk-${SDK_CHANNEL_VERSION}-${SDK_NAME}_"
+            SDK_CHANNEL_VERSION="releases/${SDK_CHANNEL_VERSION}"
           else
             SDK_NAME="sdk-${SDK_NAME}_"
-            SDK_CHANEL_VERSION="snapshots"
+            SDK_CHANNEL_VERSION="snapshots"
           fi
-          SDK_URL_PATH="https://downloads.openwrt.org/${SDK_CHANEL_VERSION}/targets/${SDK_URL_PATH}"
+          SDK_URL_PATH="https://downloads.openwrt.org/${SDK_CHANNEL_VERSION}/targets/${SDK_URL_PATH}"
           if ! ( wget -q -O - "$SDK_URL_PATH/sha256sums" | grep -- "$SDK_NAME" > sha256sums.small 2>/dev/null ) ; then
             echo "::error::Can not find ${SDK_NAME} file in sha256sums."
             exit 1
