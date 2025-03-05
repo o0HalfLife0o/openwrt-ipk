@@ -300,7 +300,7 @@ jobs:
           file "$CACHE_DIR_SDK/$SDK_FILE"
           case "$SDK_FILE" in
             *.zst)
-              zstd -dc "$CACHE_DIR_SDK/$SDK_FILE" | tar -xf -C "$SDK_HOME" --strip=1
+              zstd -dc "$CACHE_DIR_SDK/$SDK_FILE" | tar -xf - -C "$SDK_HOME" --strip=1
               ;;
             *.xz)
               tar -Jxf "$CACHE_DIR_SDK/$SDK_FILE" -C "$SDK_HOME" --strip=1
