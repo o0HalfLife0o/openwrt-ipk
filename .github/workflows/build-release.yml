@@ -298,7 +298,14 @@ jobs:
           fi
           cd -
           file "$CACHE_DIR_SDK/$SDK_FILE"
-          tar -Jxf "$CACHE_DIR_SDK/$SDK_FILE" -C "$SDK_HOME" --strip=1
+          case "$SDK_FILE" in
+            *.zst)
+              zstd -dc "$CACHE_DIR_SDK/$SDK_FILE" | tar -xf -C "$SDK_HOME" --strip=1
+              ;;
+            *.xz)
+              tar -Jxf "$CACHE_DIR_SDK/$SDK_FILE" -C "$SDK_HOME" --strip=1
+              ;;
+          esac
           cd "$SDK_HOME"
           test -d "dl" && rm -rf "dl" || true
           test -d "feeds" && rm -rf "feeds" || true
