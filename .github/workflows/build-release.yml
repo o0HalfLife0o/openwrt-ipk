@@ -10,7 +10,7 @@ on:
 
 env:
   CACHE_DIR: ~/cache
-  SDK_CHANNEL_VERSION: 24.10
+  SDK_CHANNEL_VERSION: "24.10"
 
 jobs:
   check:
@@ -23,7 +23,7 @@ jobs:
       ver: ${{ env.ver }}
       hash: ${{ env.hash }}
       commit: ${{ env.commit }}
-      SDK_CHANNEL_VERSION : ${{ steps.set.outputs.SDK_CHANNEL_VERSION }}
+      SDK_CHANNEL_VERSION : "${{ steps.set.outputs.SDK_CHANNEL_VERSION }}"
     steps:
       - uses: actions/checkout@v4
         with:
@@ -222,7 +222,7 @@ jobs:
     env:
       SDK_URL_PATH: ${{ matrix.sdk_url_path }}
       SDK_NAME: ${{ matrix.sdk_name }}
-      SDK_CHANNEL_VERSION: ${{ needs.check.outputs.SDK_CHANNEL_VERSION }}
+      SDK_CHANNEL_VERSION: "${{ needs.check.outputs.SDK_CHANNEL_VERSION }}"
       PACKAGE_NAME: ${{ needs.check.outputs.PACKAGE_NAME }}
       PACKAGE_NAME1: ${{ needs.check.outputs.PACKAGE_NAME1 }}
       COMMIT_MSG: ${{ needs.check.outputs.COMMIT_MSG }}
