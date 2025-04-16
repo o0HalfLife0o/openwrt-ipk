@@ -10,7 +10,7 @@ on:
 
 env:
   CACHE_DIR: ~/cache
-  SDK_CHANNEL_VERSION: "23.05"
+  SDK_CHANNEL_VERSION: "24.10"
 
 jobs:
   check:
@@ -185,18 +185,18 @@ jobs:
           #- arch: mips64_octeonplus
           #  sdk_url_path: octeon/generic
           #  sdk_name: octeon
-          - arch: mipsel_24kc
-            sdk_url_path: ramips/mt7620
-            sdk_name: ramips-mt7620
-          - arch: mipsel_74kc
-            sdk_url_path: bcm47xx/mips74k
-            sdk_name: bcm47xx-mips74k
-          - arch: mipsel_mips32
-            sdk_url_path: bcm47xx/generic
-            sdk_name: bcm47xx-generic
-          - arch: mips_24kc
-            sdk_url_path: ath79/generic
-            sdk_name: ath79-generic
+          #- arch: mipsel_24kc
+          #  sdk_url_path: ramips/mt7620
+          #  sdk_name: ramips-mt7620
+          #- arch: mipsel_74kc
+          #  sdk_url_path: bcm47xx/mips74k
+          #  sdk_name: bcm47xx-mips74k
+          #- arch: mipsel_mips32
+          #  sdk_url_path: bcm47xx/generic
+          #  sdk_name: bcm47xx-generic
+          #- arch: mips_24kc
+          #  sdk_url_path: ath79/generic
+          #  sdk_name: ath79-generic
           #- arch: mips_mips32
           #  sdk_url_path: bcm63xx/generic
           #  sdk_name: bcm63xx-generic
