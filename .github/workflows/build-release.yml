@@ -176,12 +176,12 @@ jobs:
           #- arch: arm_xscale
           #  sdk_url_path: kirkwood/generic
           #  sdk_name: kirkwood
-          - arch: i386_pentium
-            sdk_url_path: x86/legacy
-            sdk_name: x86-legacy
-          - arch: i386_pentium4
-            sdk_url_path: x86/generic
-            sdk_name: x86-generic
+          #- arch: i386_pentium
+          #  sdk_url_path: x86/legacy
+          #  sdk_name: x86-legacy
+          #- arch: i386_pentium4
+          #  sdk_url_path: x86/generic
+          #  sdk_name: x86-generic
           #- arch: mips64_octeonplus
           #  sdk_url_path: octeon/generic
           #  sdk_name: octeon
