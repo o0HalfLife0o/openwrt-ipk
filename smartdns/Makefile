@@ -28,7 +28,9 @@ PKG_BUILD_PARALLEL:=1
 
 # node compile is slow, so do not use it, download node manually.
 # PACKAGE_smartdns-ui:node/host
-PKG_BUILD_DEPENDS:=PACKAGE_smartdns-ui:rust/host 
+PKG_BUILD_DEPENDS:= \
+	PACKAGE_smartdns-ui:rust/host \
+	PACKAGE_smartdns-ui:node-pnpm/host
 
 include ../../lang/rust/rust-package.mk
 include $(INCLUDE_DIR)/package.mk
