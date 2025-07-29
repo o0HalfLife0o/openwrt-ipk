@@ -6,7 +6,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=smartdns
-PKG_VERSION:=1.2025.07.26-2051
+PKG_VERSION:=1.2025.07.29-1431
 PKG_RELEASE:=3
 
 PKG_SOURCE_PROTO:=git
@@ -28,9 +28,7 @@ PKG_BUILD_PARALLEL:=1
 
 # node compile is slow, so do not use it, download node manually.
 # PACKAGE_smartdns-ui:node/host
-PKG_BUILD_DEPENDS:= \
-	PACKAGE_smartdns-ui:rust/host \
-	PACKAGE_smartdns-ui:node-pnpm/host
+PKG_BUILD_DEPENDS:=PACKAGE_smartdns-ui:rust/host 
 
 include ../../lang/rust/rust-package.mk
 include $(INCLUDE_DIR)/package.mk
